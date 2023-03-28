@@ -1,0 +1,59 @@
+---
+title: "Social Network Analysis"
+author: "Michaela Fricova"
+date: "2023-03-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(plot.matrix)
+library(igraph)
+library(igraphdata)
+library(intergraph)
+#library(ape) 
+library(Matrix) 
+require(sna)
+library(plyr)
+library(dbplyr)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+data("karate")
+summary(karate)
+```
+
+```{r pressure, echo=FALSE}
+knet <- asNetwork(karate) 
+blockmodel(knet,ec = knet %v% "Faction")
+kbm <- blockmodel(knet,ec = knet %v% "Faction")$block.model 
+g_kar <- sample_sbm(34, pref.matrix = kbm, block.sizes = c(16,18), directed = FALSE)
+assortativity(g_kar, c(rep(1,16), rep(2,18))) 
+par(mfrow=c(1,2))
+plot(g_kar,
+     vertex.color = c(rep(1,16), rep(2,18)), 
+     vertex.label = NA,
+     main = "Fabricated Network")
+plot(karate, 
+     vertex.label = NA,
+     main = "Real Network")
+```
+
+```{r}
+par(mfrow=c(1,2))
+degree_cent_fabricated <- degree(g_kar, mode = "all")
+hist(degree_cent_fabricated, 
+     col = "#CD7F32",
+     main = "Fabricated Network")
+degree_cent_real <- degree(karate, mode = "all")
+hist(degree_cent_real, 
+     col = "#CD7F32",
+     main = "Real Network")
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
