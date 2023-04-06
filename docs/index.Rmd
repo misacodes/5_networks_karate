@@ -41,29 +41,6 @@ data("karate")
 summary(karate)
 head(karate)
 ```
-```{r}
-node_list <- get.data.frame(karate, what = "vertices")
-edge_list <- get.data.frame(karate, what = "edges") 
-all_nodes <- sort(node_list$name)
-plot_data <- edge_list %>% mutate(
-        to = factor(to, levels = all_nodes),
-        from = factor(from, levels = all_nodes))
-ggplot(plot_data, aes(x = from, y = to)) +
-      geom_raster() +
-      theme_bw() +
-      # Because we need the x and y axis to display every node,
-      # not just the nodes that have connections to each other,
-      # make sure that ggplot does not drop unused factor levels
-      scale_x_discrete(drop = FALSE) +
-      scale_y_discrete(drop = FALSE) +
-      theme(
-        # Rotate the x-axis lables so they are legible
-        axis.text.x = element_text(angle = 270, hjust = 0),
-        # Force the plot into a square aspect ratio
-        aspect.ratio = 1,
-        # Hide the legend (optional)
-        legend.position = "none")
-```
 
 ```{r pressure, echo=FALSE}
 knet <- asNetwork(karate) 
@@ -79,18 +56,81 @@ plot(g_kar,
 plot(karate, 
      vertex.label = NA,
      main = "Real Network")
+
+# Degree centrality 
+par(mfrow=c(1,2))
+degree_cent_fabricated <- igraph::degree(g_kar, mode = "all")
+hist(degree_cent_fabricated, 
+     col = '#fb9ca4',
+     main = "Fabricated Network",
+     xlab = "Degree centrality in the fabricated network",
+     breaks = 10,
+     xlim=c(0,20))
+degree_cent_real <- igraph::degree(karate, mode = "all")
+hist(degree_cent_real, 
+     col = '#a6d0c8',
+     main = "Real Network",
+     xlab = "Degree centrality in the real network",
+     breaks = 20,
+     xlim=c(0,20))
 ```
+# Degree centrality in the real and the fabrincated networks
+The plots and adjacency matrices compare the actual karate network to a fabricated network that has similar characteristics and equal block memberships. If we fully understood the data generating process (DGP) of the actual karate network, then we would be able to set up the fabricated network such that it would be indistinguishable from the real network. But, in our case, we observe that the fabricated network does not have exactly the same characteristics as the actual karate network. Primarily, the real network has more vertices with very low degree centrality (i.e. 0-4 connections) and also some vertices with very high degree centrality (i.e. 15+ connections), compared to the fabricated network. Such network structure with a few very popular, 'celebrity' nodes has also been commonly reported in other social networks (e.g. school friendship groups) and it has sometimes been associated with the 'Matthew effect' (Merton, 1968). But in our specific example, the 2 'celebrity' nodes correspond to the fact that there are 2 instructors (1 instructor Mr. Hi and 1 administrator John A) in the Zachary karate club and vast majority of trainees are connected to at least 1 of them. Specifically, instructor Mr. Hi has 16 connections and club administrator John A has 17 connections. In other words, there is a preferential attachment to coaches in the Zachary karate network. In contrast to this preferential attachment structure, our fabricated network is set such that every node within 1 block is stochastically equivalent (Yan et al.2014). That means that the probability of an edge between any two nodes in the fabricated network depends only on which blocks they belong to; connections between all vertices within a block are equally likely. And so, in order to make the fabricated network more similar to the actual karate network, we could use degree-corrected stochastic block modelling (Yan et al.2014). This would relax the assumption of stochastic equivalence within blocks, and instead allow for preferential attachment in the fabricated network. 
 
 ```{r}
-par(mfrow=c(1,2))
-degree_cent_fabricated <- degree(g_kar)
-hist(degree_cent_fabricated, 
-     col = "#CD7F32",
-     main = "Fabricated Network")
-degree_cent_real <- degree(karate)
-hist(degree_cent_real, 
-     col = "#CD7F32",
-     main = "Real Network")
+my_block_sizes <- c(20,20,10)
+
+# Assortative Graph
+assortative_mat <- cbind(c(0.3,0.005,0.005),
+                         c(0.005,0.3,0.005),
+                         c(0.005,0.005,0.3))
+assortative_graph <- sample_sbm(50, pref.matrix = assortative_mat, block.sizes=my_block_sizes, directed = FALSE, loops = FALSE)
+ablock_layout <- layout_components(assortative_graph)
+as_adj(assortative_graph)
+par(mfrow=c(1,1))
+plot(assortative_graph,
+     main = "'Assortative'",
+     vertex.color =c(rep(1,20), rep(2,20), rep(3,10)),
+     vertex.label=NA,
+     vertex.size=8,
+     edge.width=0.5,
+     layout=ablock_layout)
+image(assortative_graph[])
+
+# Ordered Graph
+ordered_mat <- cbind(c(0.5,0.3,0.001),
+                     c(0.3,0.5,0.3),
+                     c(0.001,0.3,0.5))
+ordered_graph <- sample_sbm(50, pref.matrix = ordered_mat, block.sizes = my_block_sizes, directed = FALSE, loops = FALSE)
+oblock_layout <- layout_components(ordered_graph)
+as_adj(ordered_graph)
+par(mfrow=c(1,1))
+plot(ordered_graph,
+     main = "'Ordered'",
+     vertex.color =c(rep(1,20), rep(2,20), rep(3,10)),
+     vertex.label=NA,
+     vertex.size=8,
+     edge.width=0.5,
+     layout=oblock_layout)
+image(ordered_graph[])
+
+# Core-periphery
+coreper_mat <-  cbind(c(0.7,0.2,0.1),
+                       c(0.2,0.4,0.1),
+                       c(0.1,0.1,0.25))
+coreper_graph <- sample_sbm(50, pref.matrix = coreper_mat, block.sizes = my_block_sizes, directed = FALSE, loops = FALSE)
+cblock_layout <- layout_components(coreper_graph)
+as_adj(coreper_graph)
+par(mfrow=c(1,1))
+plot(ordered_graph,
+     main = "'Core-Periphery'",
+     vertex.color =c(rep(1,20), rep(2,20), rep(3,10)),
+     vertex.label=NA,
+     vertex.size=8,
+     edge.width=0.5,
+     layout=cblock_layout)
+image(coreper_graph[])
+
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
