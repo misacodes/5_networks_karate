@@ -20,17 +20,49 @@ library(Matrix)
 require(sna)
 library(plyr)
 library(dbplyr)
+library(ggplot2)
 ```
 
-## R Markdown
+## Prepping the Data
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+I use the Zachary's karate network dataset that is built-in in the igraphdata R package. The dataset contains an adjacency matrix, with names of people in the club (vertex attribute denoted name) and their eventual coach after the club was spit into two (vertex attribute denoted Faction). The name Mr. Hi is a pseudonym for the karate instructor, whereas John A. is a pseudonym for the karate club president. The ‘Faction’ vertex attribute gives the faction memberships of the actors. After the split of the club, club members chose their new clubs based on their factions, except actor no. 9, who was in John A.’s faction but chose Mr. Hi’s club. The vertex attribute color codes the same information, albeit this was probably meant for graphing. There are also edge attributes - edge weights in the dataset. which correspond to the number of common activities that the club members took part in.  These activities were: 
+1. Association in and between academic classes at the university.
+2. Membership in Mr. Hi’s private karate studio on the east side of the city where Mr. Hi taught nights as a part-time instructor.
+3. Membership in Mr. Hi’s private karate studio on the east side of the city, where many of his supporters worked out on weekends.
+4. Student teaching at the east-side karate studio referred to in (2). This is different from (2) in that student teachers interacted with each other, but were prohibited from interacting with their students.
+5. Interaction at the university rathskeller, located in the same basement as the karate club’s workout area.
+6. Interaction at a student-oriented bar located across the street from the university campus.
+7. Attendance at open karate tournaments held through the area at private karate studios.
+8. Attendance at intercollegiate karate tournaments held at local universities. Since both open
+and intercollegiate tournaments were held on Saturdays, attendance at both was impossible
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r}
+```{r, error=FALSE, warning=FALSE, message=FALSE}
 data("karate")
 summary(karate)
+head(karate)
+```
+```{r}
+node_list <- get.data.frame(karate, what = "vertices")
+edge_list <- get.data.frame(karate, what = "edges") 
+all_nodes <- sort(node_list$name)
+plot_data <- edge_list %>% mutate(
+        to = factor(to, levels = all_nodes),
+        from = factor(from, levels = all_nodes))
+ggplot(plot_data, aes(x = from, y = to)) +
+      geom_raster() +
+      theme_bw() +
+      # Because we need the x and y axis to display every node,
+      # not just the nodes that have connections to each other,
+      # make sure that ggplot does not drop unused factor levels
+      scale_x_discrete(drop = FALSE) +
+      scale_y_discrete(drop = FALSE) +
+      theme(
+        # Rotate the x-axis lables so they are legible
+        axis.text.x = element_text(angle = 270, hjust = 0),
+        # Force the plot into a square aspect ratio
+        aspect.ratio = 1,
+        # Hide the legend (optional)
+        legend.position = "none")
 ```
 
 ```{r pressure, echo=FALSE}
@@ -51,11 +83,11 @@ plot(karate,
 
 ```{r}
 par(mfrow=c(1,2))
-degree_cent_fabricated <- degree(g_kar, mode = "all")
+degree_cent_fabricated <- degree(g_kar)
 hist(degree_cent_fabricated, 
      col = "#CD7F32",
      main = "Fabricated Network")
-degree_cent_real <- degree(karate, mode = "all")
+degree_cent_real <- degree(karate)
 hist(degree_cent_real, 
      col = "#CD7F32",
      main = "Real Network")
