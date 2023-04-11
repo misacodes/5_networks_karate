@@ -33,13 +33,14 @@ I use the Zachary's karate network dataset that is built-in in the igraphdata R 
 5. Interaction at the university rathskeller, located in the same basement as the karate club’s workout area.
 6. Interaction at a student-oriented bar located across the street from the university campus.
 7. Attendance at open karate tournaments held through the area at private karate studios.
-8. Attendance at intercollegiate karate tournaments held at local universities. Since both open
-and intercollegiate tournaments were held on Saturdays, attendance at both was impossible
+8. Attendance at intercollegiate karate tournaments held at local universities. Since both open and intercollegiate tournaments were held on Saturdays, attendance at both was impossible.
 
 ```{r, error=FALSE, warning=FALSE, message=FALSE}
 data("karate")
 summary(karate)
 head(karate)
+as_(karate)
+
 ```
 
 ```{r pressure, echo=FALSE}
